@@ -1,10 +1,10 @@
 # mGPS
-**Microbiome biodiversity typify fine-scale biogeography**
+**Microbiome biodiversity typifies fine-scale biogeography using a machine learning model**
 
 *Leo McCarthy, Yali Zhang and Eran Elhaik*
 
 
-This repository contains all code used for data cleaning, modelling and results contained in the mGPS analysis. Outlining the method used for developing our multi-output model for hierarchical location predictions i.e. (continent/country/city) and location co-ordinates(latitude + longitude) using bacterial abundance data as input. 
+This repository contains all code used for data cleaning, modelling and results contained in the Microbiome Geographic Population Structure (mGPS) analysis. Outlining the method used for developing our multi-output model for hierarchical location predictions i.e. (continent/country/city) and location co-ordinates(latitude + longitude) using bacterial abundance data as input. 
 
 ## Data
 
@@ -13,10 +13,9 @@ All data and geodata required to reproduce the analysis is contained within the 
 - Metasub
 
   - `complete_metadata.csv` - MetaSUB environmental and geo data
-
   - `metasub_taxa_abundance.csv` - MetaSUB taxa abundance data
-  - `After_process_megares_amr_class_rpkmg.csv` - MetaSUB AMR data
   - `MetaSUB City Metadata - Sheet1 new.csv` - MetaSUB city information data
+  - `After_process_megares_amr_class_rpkmg.csv` - MetaSUB AMR data
 - Soil
 
   - `Dataset_01_22_2018_enviro.csv` - Soil origin metadata
@@ -26,9 +25,6 @@ All data and geodata required to reproduce the analysis is contained within the 
 
   - `marine_taxa.csv` - Marine taxa and metadata
 - Geo: Geodata required for produce the analysis and figures
-- mGPS_interface: mGPS interface built in shiny and its detailed introduction 
-
-
 
 
 
@@ -40,7 +36,7 @@ The interface of mGPS and its detailed description can be found in folder `mGPS_
   - `training` -- Taxa data of samples used to train the model. 
   - `testing` -- taxa abundance data of samples for which predictions are to be generated  
   - `classTarget` -- granularity for geographic class prediction either country,city or trasit station etc. 
-  - `variables` -- a vector containing names of species or taxa to be used as variables for prediction. This needs definining even if all taxa/species in the training data frame are to be used, so that geographic information are not mistakenly used as predictors. 
+  - `variables` -- a vector containing names of species or taxa to be used as variables for prediction. This needs defining even if all taxa/species in the training data frame are to be used, so that geographic information are not mistakenly used as predictors. 
   - `hierarchy` -- The geographic hierarchy for predictions i.e. continent –> city -> latitude -> longitude
   - `nthread` -- number of threads to utilise 
   - `coast` -- (optional) data.frame of co-ordinates for predictions to be bound by
@@ -84,6 +80,8 @@ species_select(x = metasub_data[, taxa],
 Each data set used in the analysis has its own folder here. Each dataset has a `{dataset}_make.R` file for finding Geographically Informative Taxa and generating predictions using `mGPS` and cross validation the results are saved to the corresponding `outputs` folder. There is also a `{dataset}_plots.Rmd` file for each dataset in the analysis which when knit produces plots and tables found in the manuscript.
 
 Each `make` and `plots` file for the corresponding datasets should be run in turn to reproduce the full analysis. After cloning the repo the `plots` files can be run without first running the corresponding `make` file as the predictions are stored in this repo. 
+
+AMR analysis part is described in the `Metasub/Scripts/AMR` part.
 
 ## Dependencies
 

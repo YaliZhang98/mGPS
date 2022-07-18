@@ -17,18 +17,16 @@ All data and geodata required to reproduce the analysis is contained within the 
   - `metasub_taxa_abundance.csv` - MetaSUB taxa abundance data
   - `After_process_megares_amr_class_rpkmg.csv` - MetaSUB AMR data
   - `MetaSUB City Metadata - Sheet1 new.csv` - MetaSUB city information data
-
 - Soil
 
   - `Dataset_01_22_2018_enviro.csv` - Soil origin metadata
 
   - `Dataset_01_22_2018_taxa.csv` - Soil OTU taxa read data
-
 - Marine
 
   - `marine_taxa.csv` - Marine taxa and metadata
-
 - Geo: Geodata required for produce the analysis and figures
+- mGPS_interface: mGPS interface built in shiny and its detailed introduction 
 
 
 

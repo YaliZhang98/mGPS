@@ -1,0 +1,279 @@
+---
+title: "mGPS - MetaSUB global AMR analysis and figures"
+author: "Yali Zhang and Eran Elhaik"
+output: github_document
+---
+
+```{r setup, echo = F}
+### path to mGPS top-level directory here ###
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(fig.width=13, fig.height=8) 
+```
+
+This notebook outlines the procedure used to generate MetaSUB global AMR analysis for the mGPS paper, including the code used for analysis and figures.  
+
+Load dependencies
+
+```{r, echo=T, eval = T, message = F}
+library(ggplot2)
+library(ggsignif)
+library(forcats)
+library(ggpmisc)
+```
+
+
+```{r, echo = F}
+metasub_data <- read.csv("Metasub/Outputs/Global/metasub_global_results.csv")
+AMR_data <- read.csv('Data/Metasub/After_process_megares_amr_class_rpkmg.csv', check.names = F)
+
+metasub_ARM<- merge(metasub_data,AMR_data,by.x="uuid",by.y="uuid")
+```
+
+Calculate relative sequence abundance of AMR for local and non-local samples
+
+```{r}
+AMR_list <- colnames(AMR_data)[2:22]
+
+metasub_ARM$city <- factor(metasub_ARM$city)
+
+bar_df_abundance <- data.frame(row.names = c(levels(metasub_ARM$city),paste0(levels(metasub_ARM$city),':migrate')))
+
+for (i in 1:length(levels(metasub_ARM$city))){
+  
+  for (j in 1: length(AMR_list)){
+    
+    city <- levels(metasub_ARM$city)[i]
+    taxa <- AMR_list[j]  
+    city_subset <- subset(metasub_ARM[metasub_ARM$city == city,])
+    origin_same <- subset(city_subset[city_subset$city == city_subset$cityPred,])
+    origin_diff <- subset(city_subset[city_subset$city != city_subset$cityPred,])
+    
+    abun_same <- sum(origin_same[,taxa])/length(origin_same[,taxa])
+    abun_diff <- sum(origin_diff[,taxa])/length(origin_diff[,taxa])
+    
+    bar_df_abundance[city,taxa] <- abun_same
+    
+    migrate <- paste0(city,':migrate')
+    bar_df_abundance[migrate,taxa] <- abun_diff
+  }
+}
+
+# On glocal level
+global_native <- c()
+global_non <- c()
+global_city_native <- c()
+global_city_non <- c()
+for (j in 1:length(AMR_list)){
+  taxa <- AMR_list[j]  
+  
+  origin_same <- subset(metasub_ARM[metasub_ARM$city == metasub_ARM$cityPred,])
+  origin_diff <- subset(metasub_ARM[metasub_ARM$city != metasub_ARM$cityPred,])
+  
+  abun_same <- mean(origin_same[,taxa])
+  abun_diff <- mean(origin_diff[,taxa])
+  
+  global_native <- c(global_native,abun_same)
+  global_non <- c(global_non,abun_diff)
+  
+  global_city_native <- c(global_city_native, mean(bar_df_abundance[c(1:38,40),taxa]))
+  global_city_non <- c(global_city_non,mean(bar_df_abundance[41:80,taxa]))
+}
+
+```
+
+Fig 8-A Comparing RPKM values of each AMRs between local and non-local samples on a global level. Bar colors distinguish local (green) from non-local (red) samples.
+
+```{r}
+global_avg_df_1 <- cbind.data.frame('AMR'= AMR_list,'Source'=rep('Local',21),'value'=global_native)
+global_avg_df_2 <- cbind.data.frame('AMR'= AMR_list,'Source'=rep('Non-local',21),'value'=global_non)
+global_avg_df <- rbind.data.frame(global_avg_df_1,global_avg_df_2)
+
+global_avg_df$AMR <- factor(global_avg_df$AMR)
+global_avg_df$AMR <- fct_inorder(global_avg_df$AMR)
+global_avg_df$AMR <- fct_relevel(global_avg_df$AMR,
+                                         rev(levels(global_avg_df$AMR))) 
+
+global_avg_df$Source <- factor(global_avg_df$Source)
+global_avg_df$Source <- fct_relevel(global_avg_df$Source,
+                                 rev(levels(global_avg_df$Source))) 
+
+ggplot(global_avg_df,aes(x=AMR,y=value,fill=Source))+
+  geom_bar(stat="identity",position=position_dodge(0.75))+
+  coord_flip()+
+  ylab('AMR relative abundance (RPKM)')+
+  theme_bw()+
+  theme(title=element_text(size=8),
+        axis.text=element_text(size=8),
+        legend.text = element_text(size =8))
+
+```
+
+Fig 8-B Comparisons of AMRs’ RPKM values distributions of local and non-local samples globally.
+
+```{r}
+
+#global individual
+for (i in 1:length(metasub_ARM$uuid)){
+ if (metasub_ARM[i,'city'] == metasub_ARM[i,'cityPred']){
+   metasub_ARM[i,'Migration'] = 'Local'
+ }else{
+   metasub_ARM[i,'Migration'] = 'Non-local'
+ }
+}
+
+AMR_df <- subset(metasub_ARM[,c(AMR_list[1:20],'Migration')])
+reshape2::melt(AMR_df,id.vars="Migration") -> dfa0
+
+dfa0$Migration <- factor(dfa0$Migration)
+
+levels(dfa0$Migration) <- c('Local','Non-local')
+
+ggplot(dfa0, aes(x=Migration,y=value,fill=Migration)) + 
+  geom_boxplot() +
+  ylim(0,100)+
+  ylab('AMR relative abundance (RPKM)')+
+  xlab('Sample source')+
+  guides(fill=FALSE) +
+  # ggtitle('AMR comparison for local and non-local samples (wilcox.test)')+
+  facet_wrap(~variable) +
+  geom_signif(comparisons = list(c("Local", "Non-local")),
+              step_increase = 0.3,
+              map_signif_level = T,
+              test = wilcox.test)+
+  theme_bw()
+```
+
+Fig 8-C Total AMR RPKM values for local and non-local samples per city. 
+
+```{R}
+bar_df_abundance2 <- bar_df_abundance
+bar_df_abundance2$city_1 <- row.names(bar_df_abundance)
+reshape2::melt(bar_df_abundance2,id.vars="city_1") -> dfa1
+
+for (i in 1:length(dfa1$city_1)){
+  city <- dfa1$city_1[i]
+  
+  if (':' %in% strsplit(city,'')[[1]]){
+    country <- strsplit(city,':')[[1]][1]
+    
+    if ('_' %in% strsplit(country,'')[[1]]){
+      
+      country <- strsplit(country,'_')[[1]]
+      
+      for (a in 1:length(country)){
+        country_a <- strsplit(country[a],'')[[1]]
+        country_a[1] <- toupper(country_a[1])
+        country_a <- paste(country_a, collapse='')
+        country[a] <- country_a}
+      country <- paste(country, collapse=' ')
+      
+    }else{
+      
+      country <- strsplit(country,'')[[1]]
+      country[1] <- toupper(country[1])
+      country <- paste(country, collapse='')
+    }
+    
+    dfa1[i,'city'] <- country
+    dfa1[i,'Sample origin'] <- 'Non-native'
+  }else{
+    
+    country <- city
+    
+    if ('_' %in% strsplit(country,'')[[1]]){
+      
+      country <- strsplit(country,'_')[[1]]
+      
+      for (a in 1:length(country)){
+        country_a <- strsplit(country[a],'')[[1]]
+        country_a[1] <- toupper(country_a[1])
+        country_a <- paste(country_a, collapse='')
+        country[a] <- country_a}
+      country <- paste(country, collapse=' ')
+      
+    }else{
+      
+      country <- strsplit(country,'')[[1]]
+      country[1] <- toupper(country[1])
+      country <- paste(country, collapse='')
+    
+    dfa1[i,'city'] <- country
+    dfa1[i,'Sample origin'] <- 'Native'
+  }
+  
+}
+
+# AMR_Sum analysis for each city
+dfa1$variable <- as.character(dfa1$variable)
+ARM_sum_df <- subset(dfa1[dfa1$variable == 'AMR (total)',])
+
+city_anno <- read.csv('Data/Metasub/MetaSUB City Metadata - Sheet1 new.csv')
+
+for (i in 1:length(ARM_sum_df$city)){
+  city <- ARM_sum_df$city_1[i]
+  if (':' %in% strsplit(city,'')[[1]]){
+    city <- strsplit(city,':')[[1]][1]
+  }
+  ARM_sum_df[i,'country'] <- city_anno[city_anno$city == city,'country']
+  ARM_sum_df[i,'continent'] <- city_anno[city_anno$city == city,'continent']
+}
+
+ARM_sum_df <- ARM_sum_df[order(ARM_sum_df$country),]
+ARM_sum_df <- ARM_sum_df[order(ARM_sum_df$continent),]
+
+for (i in 1:length(ARM_sum_df$city_1)){
+  if (':' %in% strsplit(ARM_sum_df$city_1[i],'')[[1]]){
+    ARM_sum_df[i,'order'] <- ARM_sum_df[i,'value']
+    city_m <- strsplit(ARM_sum_df$city_1[i],':')[[1]][1]
+    ARM_sum_df[ARM_sum_df$city_1 == city_m,'order'] <- ARM_sum_df[i,'value']
+  }
+}
+
+ARM_sum_df2 <- ARM_sum_df[order(ARM_sum_df$order),]
+ARM_sum_df2$city <- factor(ARM_sum_df2$city)
+ARM_sum_df2$city <- fct_inorder(ARM_sum_df2$city)
+ARM_sum_df2$city <- fct_relevel(ARM_sum_df2$city,rev(levels(ARM_sum_df2$city))) 
+ARM_sum_df3 <- ARM_sum_df2
+ARM_sum_df3[length(ARM_sum_df3$city_1),'value'] <- 10
+
+ggplot(ARM_sum_df3,aes(x=city,y=value,fill=`Sample origin`))+
+  geom_bar(stat="identity",position=position_dodge(1))+
+  ylab('AMR relative abundance (RPKM)')+
+  xlab('City')+
+  theme_bw()+
+  theme(axis.text.x = element_text( vjust = 0.5, hjust = 1, angle = 90))+
+  annotate("text", x=4.9 , y=10,label = "* True value = 13.65", )+
+  scale_fill_manual(values = c("#00BFC4", "#F8766D"),
+                    breaks = c("Native", "Non-native"),
+                    label = c('Local','Non-local'),
+                    name = 'Source')+
+  theme(legend.background = element_rect(
+    size=0.3, linetype="solid",
+    colour ="black"))
+
+```
+
+Fig 8-D The correlation of total AMR RPKM values of non-local samples and the annual number of tourists
+
+```{r}
+tour_df <- ARM_sum_df[ARM_sum_df$`Sample origin`=='Non-native',]
+
+for (i in 1:length(tour_df$city_1)){
+  city <- strsplit(tour_df$city_1[i],':')[[1]][1]
+  tour_df[i,'tourists'] <- city_anno[city_anno$city == city,'number_of_tourists_annually']
+}
+
+tour_df2 <- tour_df[order(tour_df$value,decreasing = T),]
+tour_df2 <- tour_df2[-1,]
+
+options(scipen=200)
+
+ggplot(data = tour_df,aes(x=tourists,y=value))+
+  geom_point(size=2)+
+  ylab('AMR relative abundance (RPKM)')+
+  xlab('Number of tourists annually')+
+  stat_smooth(method=lm,formula=y~x,se=FALSE)+
+  geom_smooth (method = lm,linetype=1,se=FALSE,span=1)+
+  theme_bw()+
+  theme(axis.text.x = element_text( vjust = 0.5, hjust = 1))
+```

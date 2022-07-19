@@ -1,5 +1,11 @@
 library(caret)
 source("mGPS.r")
+
+##Data transformation 
+data_normalise <- function(df) {
+  return(df/rowSums(df))
+}
+
 #Load Data
 setwd( rprojroot::find_rstudio_root_file())
 marine_taxa =  read.csv(file="Data/Marine/marine_taxa.csv",header=TRUE)

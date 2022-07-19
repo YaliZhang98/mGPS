@@ -8,7 +8,7 @@ This repository contains all code used for data cleaning, modelling and results 
 
 ## Data
 
-All data and geodata required to reproduce the analysis is contained within the `Data` folder and needs to be unzipped before running the analysis. 
+All data and geodata required to reproduce the analysis is contained within the `Data.zip`  and needs to be unzipped before running the analysis. 
 
 - Metasub
 
@@ -30,16 +30,24 @@ All data and geodata required to reproduce the analysis is contained within the 
 
 ## Usage 
 
-The interface of mGPS and its detailed description can be found in folder `mGPS_interface`
+The interface of mGPS and its detailed description can be found in folder `mGPS_interface`。
 
-* `mGPS()` function takes several arguments:   
-  - `training` -- Taxa data of samples used to train the model. 
-  - `testing` -- taxa abundance data of samples for which predictions are to be generated  
-  - `classTarget` -- granularity for geographic class prediction either country,city or trasit station etc. 
-  - `variables` -- a vector containing names of species or taxa to be used as variables for prediction. This needs defining even if all taxa/species in the training data frame are to be used, so that geographic information are not mistakenly used as predictors. 
-  - `hierarchy` -- The geographic hierarchy for predictions i.e. continent –> city -> latitude -> longitude
-  - `nthread` -- number of threads to utilise 
-  - `coast` -- (optional) data.frame of co-ordinates for predictions to be bound by
+In `mGPS.r`, there are two parts of scripts: 
+
+* `species_select()` - function using random forest for selecting optimal Geographically Informative Taxa (GIT) that used to built the mGPS prediction model:
+  - `x` -- prediction variables
+  - `y` -- target variable 
+  - `remove_correlated` -- should correlated predictor variables be removed (>98% correlation). 
+  - `subsets` -- The variable subset sizes to try 
+  - `cores` -- number of cores to utilize 
+* `mGPS()` - a machine-learning-based function that utilizes microbial relative sequence abundances to yield a fine-scale source site for microorganisms
+  * `training` -- Taxa data of samples used to train the model. 
+  * `testing` -- taxa abundance data of samples for which predictions are to be generated  
+  * `classTarget` -- granularity for geographic class prediction either country,city or transit station etc. 
+  * `variables` -- a vector containing names of species or taxa to be used as variables for prediction. This needs defining even if all taxa/species in the training data frame are to be used, so that geographic information are not mistakenly used as predictors. 
+  * `hierarchy` -- The geographic hierarchy for predictions i.e. continent –> city -> latitude -> longitude
+  * `nthread` -- number of threads to utilize 
+  * `coast` -- (optional) data.frame of co-ordinates for predictions to be bound by
 
 
 If no test set is given then a trained model is returned that takes a test set as the input. 
@@ -57,24 +65,6 @@ mGPS(training = train,
      coast=coastlines)
 ```
 
-* `species_select()` - function for selecting optimal Geographically informative taxa:
-  - `x` -- predictior variables
-  - `y` -- target variable 
-  - `remove_correlated` -- should correlated predictor variables be removed (>98% correlation). 
-  - `subsets` -- The variable subset sizes to try 
-  - `cores` -- number of cores to utilise 
-
-Example
-```R
-species_select(x = metasub_data[, taxa],
-               y = metasub_data$city,
-               remove_correlated = F,
-               c(50,100,200,300,500),
-               cores = 8)
-```
-
-
-
 ## Results and figures
 
 Each data set used in the analysis has its own folder here. Each dataset has a `{dataset}_make.R` file for finding Geographically Informative Taxa and generating predictions using `mGPS` and cross validation the results are saved to the corresponding `outputs` folder. There is also a `{dataset}_plots.Rmd` file for each dataset in the analysis which when knit produces plots and tables found in the manuscript.
@@ -86,14 +76,3 @@ AMR analysis part is described in the `Metasub/Scripts/AMR` part.
 ## Dependencies
 
 Required packages for mGPS algorithm can be found in `packages.r`. The packages used for mGPS interface an be found in `mGPS_interface/packages.r`
-
-
-
-
-
-
-
-
-
-
-

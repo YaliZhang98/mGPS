@@ -1,16 +1,6 @@
-
 library(caret)
 library(xgboost)
 library(e1071)
-
-##Data transformation 
-data_normalise <- function(df) {
-
-  return(df/rowSums(df))
-  
-}
-
-
 
 
 ##Feature selection algorithm

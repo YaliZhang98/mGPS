@@ -40,6 +40,16 @@ In `mGPS.r`, there are two parts of scripts:
   - `remove_correlated` -- should correlated predictor variables be removed (>98% correlation). 
   - `subsets` -- The variable subset sizes to try 
   - `cores` -- number of cores to utilize 
+
+Example
+```R
+species_select(x = metasub_data[, taxa],
+               y = metasub_data$city,
+               remove_correlated = F,
+               c(50,100,200,300,500),
+               cores = 8)
+```
+
 * `mGPS()` - a machine-learning-based function that utilizes microbial relative sequence abundances to yield a fine-scale source site for microorganisms
   * `training` -- Taxa data of samples used to train the model. 
   * `testing` -- taxa abundance data of samples for which predictions are to be generated  

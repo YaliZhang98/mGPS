@@ -91,5 +91,32 @@ MetasubDataPreds <- rbind.fill(add_preds)
 write.csv(MetasubDataPreds,"Metasub/Outputs/metasub_global_results.csv")
 
 
+# leave-one-out
+library(dplyr)
+library(geosphere)
 
+distance_matrix <- distm(metasub_data[, c("longitude", "latitude")]) # Compute Haversine distance matrix
+k <- 120
+kmeans_result <- kmeans(distance_matrix, centers = k,)
+metasub_data$cluster <- as.factor(kmeans_result$cluster)
 
+GeoPreds_cluster <- list()
+for (i in 1:120){
+  train <- metasub_data[metasub_data$cluster!=i,]
+  test <- metasub_data[metasub_data$cluster==i,]
+  
+  testPreds <-mGPS(training = train, testing = test, classTarget = "city",variables = optVars,nthread = 8,hierarchy = c('continent','city','latitude','longitude'), coast=coastlines)
+  GeoPreds_cluster[[i]] <- testPreds
+}
+
+#Combine these test predictions into one data set 
+add_preds_cluster <- list()
+for (i in 1:120){
+  add_preds_cluster[[i]] <- cbind(metasub_data[metasub_data$cluster==i,] , 
+                          "cityPred"= GeoPreds_cluster[[i]][[1]], 
+                          "latPred" = GeoPreds_cluster[[i]][[2]], 
+                          "longPred" = GeoPreds_cluster[[i]][[3]] )
+}
+
+MetasubDataPreds_cluster <- rbind.fill(add_preds_cluster)
+# Same evaluation as MetaSUB

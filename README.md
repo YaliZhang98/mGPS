@@ -4,7 +4,8 @@
 *Yali Zhang, Leo McCarthy, S. Emil Ruff, and Eran Elhaik*
 
 
-This repository contains all code used for data cleaning, modelling and results of the Microbiome Geographic Population Structure (mGPS). mGPS is a biogeographical tool that employs multi-output model for hierarchical location predictions (i.e., continent/country/city) and location coordinates (latitude + longitude) using bacterial abundance data as input. 
+This repository contains all code used for data cleaning, modelling and results of the Microbiome Geographic Population Structure (mGPS). mGPS is a biogeographical tool that employs multi-output model for hierarchical location predictions (i.e., continent/country/city) and location coordinates (latitude + longitude) using bacterial abundance data as input.  
+For the mGPS interface - the freely available public tool with a friendly user interface developed with the shiny package in R (version 4.0.3), please visit: [mGPS_interface](https://github.com/YaliZhang98/mGPS_interface)
 
 ## Data
 

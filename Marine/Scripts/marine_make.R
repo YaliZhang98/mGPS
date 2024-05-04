@@ -12,13 +12,18 @@ marine_taxa =  read.csv(file="Data/Marine/marine_taxa.csv",header=TRUE)
 taxa <- names(marine_taxa[,c(2:2512)])
 marine_taxa$Sea = factor(make.names(marine_taxa$Sea))
 
-
-
 #Normalise data
 marine_taxa[is.na(marine_taxa)] <- 0
-marine_taxa[,taxa] <- marine_taxa[,taxa][,-which(colSums(marine_taxa[,taxa]) == 0)] 
-marine_taxa[,taxa] <- data_normalise(marine_taxa[,taxa])
+po_out <- c()
+for (i in 2:2512) {
+  if(sum(marine_taxa[,i]) == 0){
+    po_out <- c(po_out,i)
+  }
+}
 
+marine_taxa <- marine_taxa[,-po_out]
+taxa <- names(marine_taxa[,c(3:2330)])
+marine_taxa_new[,taxa] <- data_normalise(marine_taxa[,taxa])
 
 #Get GITs
 featureElimination <- species_select(x = marine_taxa[,taxa],y = marine_taxa$Sea, remove_correlated = T, subsets = c(5000,500,300,200,100),cores = 7)
